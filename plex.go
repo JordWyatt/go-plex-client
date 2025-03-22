@@ -420,6 +420,33 @@ func (p *Plex) GetPlaylist(key int) (SearchResultsEpisode, error) {
 	return results, nil
 }
 
+func (p *Plex) GetPlaylists() (SearchResults, error) {
+	query := fmt.Sprintf("%s/playlists", p.URL)
+
+	resp, err := p.get(query, p.Headers)
+
+	if err != nil {
+		return SearchResults{}, err
+	}
+
+	// Unauthorized
+	if resp.StatusCode == http.StatusUnauthorized {
+		return SearchResults{}, errors.New(ErrorNotAuthorized)
+	} else if resp.StatusCode != http.StatusOK {
+		return SearchResults{}, fmt.Errorf(ErrorServer, resp.Status)
+	}
+
+	defer resp.Body.Close()
+
+	var results SearchResults
+
+	if err := json.NewDecoder(resp.Body).Decode(&results); err != nil {
+		return SearchResults{}, err
+	}
+
+	return results, nil
+}
+
 // GetThumbnail returns the response of a request to pms thumbnail
 // My ideal use case would be to proxy a request to pms without exposing the plex token
 func (p *Plex) GetThumbnail(key, thumbnailID string) (*http.Response, error) {

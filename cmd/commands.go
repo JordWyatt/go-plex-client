@@ -977,6 +977,36 @@ func getPlaylist(c *cli.Context) error {
 	return nil
 }
 
+func getPlaylists(c *cli.Context) error {
+	db, err := startDB()
+
+	if err != nil {
+		return cli.NewExitError(err, 1)
+	}
+
+	defer db.Close()
+
+	plexConn, err := initPlex(db, true, true)
+
+	if err != nil {
+		return err
+	}
+
+	if err != nil {
+		return cli.NewExitError(err, 1)
+	}
+
+	result, err := plexConn.GetPlaylists()
+
+	if err != nil {
+		return cli.NewExitError(err, 1)
+	}
+
+	fmt.Printf("%+v\n", result)
+
+	return nil
+}
+
 func deleteMedia(c *cli.Context) error {
 	db, err := startDB()
 
@@ -1003,6 +1033,32 @@ func deleteMedia(c *cli.Context) error {
 	}
 
 	fmt.Printf("successfully deleted media '%s'\n", mediaID)
+
+	return nil
+}
+
+func setToken(c *cli.Context) error {
+	db, err := startDB()
+
+	if err != nil {
+		return cli.NewExitError(err, 1)
+	}
+
+	defer db.Close()
+
+	if c.NArg() == 0 {
+		return cli.NewExitError("token is required", 1)
+	}
+
+	token := c.Args().First()
+
+	if isVerbose {
+		fmt.Println("saving token locally...")
+	}
+
+	if err := db.savePlexToken(token); err != nil {
+		return cli.NewExitError(err, 1)
+	}
 
 	return nil
 }
